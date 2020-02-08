@@ -7,6 +7,9 @@ import torch
 import torch.optim as optim
 from AutoEncoder import autoencoder
 from kurstosis_loss import KurtosisLoss
+import os
+from PIL import Image
+import numpy
 
 # if not os.path.exists('./mlp_img'):
 #     os.mkdir('./mlp_img')
@@ -30,8 +33,8 @@ if __name__ == '__main__':
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
-
-    dim = 28 ** 2
+    im_dim = 28
+    dim = im_dim ** 2
     dims = [dim] * 3
     epochs = 100
     gamma = 0
@@ -40,15 +43,26 @@ if __name__ == '__main__':
     write_output_every_epoch = 1
     num_images_to_output = 10
     intial_lr = 0.01
+    output_dir = 'output'
+    train_output_dir_name = 'train'
+    test_output_dir_name = 'test'
+    data_dir = 'data'
+    experiment_name = 'no_bottleneck_no_kurt'
+    image_format_ext = '.png'
+    train_dir = os.path.join(output_dir, experiment_name, train_output_dir_name)
+    test_dir = os.path.join(output_dir, experiment_name, test_output_dir_name)
 
     net = autoencoder(dims)
     kurt_loss = KurtosisLoss()
     reconstruction_loss = torch.nn.MSELoss()
 
-    dataset = MNIST('data', transform=img_transform, train=True)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    iter_in_epoch = len(dataloader)
+    dataset = MNIST(data_dir, transform=img_transform, train=True)
+    testset = MNIST(data_dir, transform=img_transform, train=False)
 
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    testloader = DataLoader(testset, batch_size=num_images_to_output, shuffle=True)
+
+    iter_in_epoch = len(dataloader)
 
     net.to(device)
     optimizer = optim.SGD(net.parameters(), lr=intial_lr)
@@ -66,12 +80,22 @@ if __name__ == '__main__':
             out = net.decode(latent_dim_variables)
             loss = reconstruction_loss(out, batch_vectors) + gamma * kurt_loss(latent_dim_variables)
             if iteration % print_every_iteration == 0:
-                print('epoch {} --- iteration {} out of {}. lr = {} loss = {}'.format(epoch,iteration,iter_in_epoch,str(optimizer.param_groups[0]['lr']),str(loss.detach().numpy())))
+                print('epoch {} --- iteration {} out of {}. lr = {} loss = {}'.format(epoch, iteration, iter_in_epoch,
+                                                                                      str(optimizer.param_groups[0][
+                                                                                              'lr']),
+                                                                                      str(loss.detach().numpy())))
             loss.backward()
             optimizer.step()
             # scheduler.step()
         if epoch % write_output_every_epoch == 0:
-            pass
-
+            cur_epoch_train_dir = os.path.join(train_dir, str(epoch))
+            cur_epoch_test_dir = os.path.join(test_dir, str(epoch))
+            os.makedirs(cur_epoch_train_dir, exist_ok=True)
+            os.makedirs(cur_epoch_test_dir, exist_ok=True)
+            for i in range(num_images_to_output):
+                image = out[i, :].reshape(im_dim, im_dim)
+                file_name = os.path.join(cur_epoch_train_dir, str(i) + image_format_ext)
+                save_image(image,file_name,normalize=True)
+                # test_images, _ = next(iter(testloader))
 
 a = 3
