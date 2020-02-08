@@ -48,7 +48,7 @@ if __name__ == '__main__':
     train_output_dir_name = 'train'
     test_output_dir_name = 'test'
     data_dir = 'data'
-    experiment_name = 'no_bottleneck_no_kurt_momentum'
+    experiment_name = 'no_bottleneck_no_kurt_momentum_with_test'
     image_format_ext = '.png'
     train_dir = os.path.join(output_dir, experiment_name, train_output_dir_name)
     test_dir = os.path.join(output_dir, experiment_name, test_output_dir_name)
@@ -61,12 +61,11 @@ if __name__ == '__main__':
     testset = MNIST(data_dir, transform=img_transform, train=False)
 
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    testloader = DataLoader(testset, batch_size=num_images_to_output, shuffle=True)
 
     iter_in_epoch = len(dataloader)
 
     net.to(device)
-    optimizer = optim.SGD(net.parameters(), lr=intial_lr,momentum=0.9)
+    optimizer = optim.SGD(net.parameters(), lr=intial_lr, momentum=0.9)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.8)
     # batch = next(iter(dataloader))
     # for epoch in range(100):
@@ -94,13 +93,22 @@ if __name__ == '__main__':
             cur_epoch_test_dir = os.path.join(test_dir, str(epoch))
             os.makedirs(cur_epoch_train_dir, exist_ok=True)
             os.makedirs(cur_epoch_test_dir, exist_ok=True)
+            testloader = DataLoader(testset, batch_size=num_images_to_output, shuffle=True)
+            test_batch, _ = next(iter(testloader))
+            test_vecs = torch.flatten(test_batch, start_dim=1)
+            test_out = net(test_vecs)
             for i in range(num_images_to_output):
                 image = out[i, :].reshape(im_dim, im_dim)
                 orig_image = batch_vectors[i, :].reshape(im_dim, im_dim)
+                test_image = test_out[i, :].reshape(im_dim, im_dim)
+                test_orig_image = test_vecs[i, :].reshape(im_dim,im_dim)
                 file_name = os.path.join(cur_epoch_train_dir, str(i) + image_format_ext)
                 orig_file_name = os.path.join(cur_epoch_train_dir, str(i) + '_orig' + image_format_ext)
+                test_file_name = os.path.join(cur_epoch_test_dir, str(i) + image_format_ext)
+                test_orig_file_name = os.path.join(cur_epoch_test_dir, str(i) + '_orig' + image_format_ext)
                 save_image(image, file_name, normalize=True)
                 save_image(orig_image, orig_file_name, normalize=True)
-                # test_images, _ = next(iter(testloader))
+                save_image(test_image, test_file_name, normalize=True)
+                save_image(test_orig_image, test_orig_file_name, normalize=True)
 
 a = 3

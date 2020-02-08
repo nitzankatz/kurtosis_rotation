@@ -39,8 +39,8 @@ class autoencoder(nn.Module):
         return x
 
     def forward(self, x):
-        x = self.encoder(x)
-        x = self.decoder(x)
+        x = self.encode(x)
+        x = self.decode(x)
         return x
 
 
