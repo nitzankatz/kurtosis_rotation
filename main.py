@@ -94,8 +94,11 @@ if __name__ == '__main__':
             os.makedirs(cur_epoch_test_dir, exist_ok=True)
             for i in range(num_images_to_output):
                 image = out[i, :].reshape(im_dim, im_dim)
+                orig_image = batch_vectors[i, :].reshape(im_dim, im_dim)
                 file_name = os.path.join(cur_epoch_train_dir, str(i) + image_format_ext)
-                save_image(image,file_name,normalize=True)
+                orig_file_name = os.path.join(cur_epoch_train_dir, str(i) + '_orig'+ image_format_ext)
+                save_image(image, file_name, normalize=True)
+                save_image(orig_image, orig_file_name, normalize=True)
                 # test_images, _ = next(iter(testloader))
 
 a = 3
