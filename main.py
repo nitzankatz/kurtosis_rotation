@@ -37,17 +37,18 @@ if __name__ == '__main__':
     dim = im_dim ** 2
     dims = [dim] * 3
     epochs = 100
-    gamma = 0
+    lamda = 0
     batch_size = 100
     print_every_iteration = 100
     write_output_every_epoch = 1
     num_images_to_output = 10
     intial_lr = 0.01
+    momentum = 0.9
     output_dir = 'output'
     train_output_dir_name = 'train'
     test_output_dir_name = 'test'
     data_dir = 'data'
-    experiment_name = 'no_bottleneck_no_kurt'
+    experiment_name = 'no_bottleneck_no_kurt_momentum'
     image_format_ext = '.png'
     train_dir = os.path.join(output_dir, experiment_name, train_output_dir_name)
     test_dir = os.path.join(output_dir, experiment_name, test_output_dir_name)
@@ -65,8 +66,8 @@ if __name__ == '__main__':
     iter_in_epoch = len(dataloader)
 
     net.to(device)
-    optimizer = optim.SGD(net.parameters(), lr=intial_lr)
-    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1200, gamma=0.5)
+    optimizer = optim.SGD(net.parameters(), lr=intial_lr,momentum=0.9)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.8)
     # batch = next(iter(dataloader))
     # for epoch in range(100):
     #     for iteration in range(6000):
@@ -78,15 +79,16 @@ if __name__ == '__main__':
             batch_vectors.to(device)
             latent_dim_variables = net.encode(batch_vectors)
             out = net.decode(latent_dim_variables)
-            loss = reconstruction_loss(out, batch_vectors) + gamma * kurt_loss(latent_dim_variables)
+            loss = reconstruction_loss(out, batch_vectors) + lamda * kurt_loss(latent_dim_variables)
             if iteration % print_every_iteration == 0:
-                print('epoch {} --- iteration {} out of {}. lr = {} loss = {}'.format(epoch, iteration, iter_in_epoch,
-                                                                                      str(optimizer.param_groups[0][
-                                                                                              'lr']),
-                                                                                      str(loss.detach().numpy())))
+                print(
+                    'epoch {} --- iteration {} out of {}. lr = {:.3f} loss = {}'.format(epoch, iteration, iter_in_epoch,
+                                                                                        optimizer.param_groups[0][
+                                                                                            'lr'],
+                                                                                        loss.detach().numpy()))
             loss.backward()
             optimizer.step()
-            # scheduler.step()
+        scheduler.step()
         if epoch % write_output_every_epoch == 0:
             cur_epoch_train_dir = os.path.join(train_dir, str(epoch))
             cur_epoch_test_dir = os.path.join(test_dir, str(epoch))
@@ -96,7 +98,7 @@ if __name__ == '__main__':
                 image = out[i, :].reshape(im_dim, im_dim)
                 orig_image = batch_vectors[i, :].reshape(im_dim, im_dim)
                 file_name = os.path.join(cur_epoch_train_dir, str(i) + image_format_ext)
-                orig_file_name = os.path.join(cur_epoch_train_dir, str(i) + '_orig'+ image_format_ext)
+                orig_file_name = os.path.join(cur_epoch_train_dir, str(i) + '_orig' + image_format_ext)
                 save_image(image, file_name, normalize=True)
                 save_image(orig_image, orig_file_name, normalize=True)
                 # test_images, _ = next(iter(testloader))
