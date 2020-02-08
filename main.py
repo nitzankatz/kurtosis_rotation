@@ -35,19 +35,23 @@ if __name__ == '__main__':
     dims = [dim] * 3
     epochs = 100
     gamma = 0
-    print_every = 100
+    batch_size = 100
+    print_every_iteration = 100
+    write_output_every_epoch = 1
+    num_images_to_output = 10
+    intial_lr = 0.01
 
     net = autoencoder(dims)
     kurt_loss = KurtosisLoss()
     reconstruction_loss = torch.nn.MSELoss()
 
     dataset = MNIST('data', transform=img_transform, train=True)
-    dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     iter_in_epoch = len(dataloader)
 
 
     net.to(device)
-    optimizer = optim.SGD(net.parameters(), lr=0.001)
+    optimizer = optim.SGD(net.parameters(), lr=intial_lr)
     # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1200, gamma=0.5)
     # batch = next(iter(dataloader))
     # for epoch in range(100):
@@ -61,9 +65,13 @@ if __name__ == '__main__':
             latent_dim_variables = net.encode(batch_vectors)
             out = net.decode(latent_dim_variables)
             loss = reconstruction_loss(out, batch_vectors) + gamma * kurt_loss(latent_dim_variables)
-            if iteration % print_every == 0:
+            if iteration % print_every_iteration == 0:
                 print('epoch {} --- iteration {} out of {}. lr = {} loss = {}'.format(epoch,iteration,iter_in_epoch,str(optimizer.param_groups[0]['lr']),str(loss.detach().numpy())))
             loss.backward()
             optimizer.step()
             # scheduler.step()
+        if epoch % write_output_every_epoch == 0:
+            pass
+
+
 a = 3
