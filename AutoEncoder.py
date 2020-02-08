@@ -35,7 +35,7 @@ class autoencoder(nn.Module):
             x = self.decoder[i](x)
             x = nn.functional.relu(x)
         x = self.decoder[self.num_layers-1](x)
-        x = nn.functional.tanh(x)
+        x = torch.tanh(x)
         return x
 
     def forward(self, x):
