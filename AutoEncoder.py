@@ -38,6 +38,11 @@ class autoencoder(nn.Module):
         x = nn.functional.tanh(x)
         return x
 
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.decoder(x)
+        return x
+
 
 if __name__ == '__main__':
     dim = 28 ** 2

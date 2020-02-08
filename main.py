@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     dim = 28 ** 2
     dims = [dim] * 3
-    epochs = 3
+    epochs = 100
     gamma = 0
     print_every = 100
 
@@ -42,18 +42,19 @@ if __name__ == '__main__':
     reconstruction_loss = torch.nn.MSELoss()
 
     dataset = MNIST('data', transform=img_transform, train=True)
-    dataloader = DataLoader(dataset, batch_size=10, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=100, shuffle=True)
     iter_in_epoch = len(dataloader)
 
 
     net.to(device)
     optimizer = optim.SGD(net.parameters(), lr=0.001)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1200, gamma=0.5)
-    batch = next(iter(dataloader))
-    for epoch in range(100):
-        for iteration in range(6000):
-    # for epoch in range(epochs):
-        # for iteration, batch in enumerate(dataloader):
+    # scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1200, gamma=0.5)
+    # batch = next(iter(dataloader))
+    # for epoch in range(100):
+    #     for iteration in range(6000):
+    for epoch in range(epochs):
+        for iteration, batch in enumerate(dataloader):
+            net.zero_grad()
             batch_images, _ = batch
             batch_vectors = torch.flatten(batch_images, start_dim=1)
             batch_vectors.to(device)
@@ -64,5 +65,5 @@ if __name__ == '__main__':
                 print('epoch {} --- iteration {} out of {}. lr = {} loss = {}'.format(epoch,iteration,iter_in_epoch,str(optimizer.param_groups[0]['lr']),str(loss.detach().numpy())))
             loss.backward()
             optimizer.step()
-            scheduler.step()
+            # scheduler.step()
 a = 3
