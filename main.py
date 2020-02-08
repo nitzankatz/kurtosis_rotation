@@ -12,28 +12,9 @@ from PIL import Image
 import numpy
 from tensorboardX import SummaryWriter
 
-# if not os.path.exists('./mlp_img'):
-#     os.mkdir('./mlp_img')
-#
-#
-# def to_img(x):
-#     x = 0.5 * (x + 1)
-#     x = x.clamp(0, 1)
-#     x = x.view(x.size(0), 1, 28, 28)
-#     return x
-#
-#
-# num_epochs = 100
-# batch_size = 128
-# learning_rate = 1e-3
 
-
-if __name__ == '__main__':
+def main():
     device = 'cpu'
-    img_transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ])
     im_dim = 28
     dim = im_dim ** 2
     dims = [dim] * 6
@@ -48,33 +29,21 @@ if __name__ == '__main__':
     lr_decay_step_size = 5
     lr_decay = 0.5
     output_dir = 'output'
-    train_output_dir_name = 'train'
-    test_output_dir_name = 'test'
     data_dir = 'data'
     experiment_name = 'no_kurt_deeper_higher_lr'
     image_format_ext = '.png'
-    train_dir = os.path.join(output_dir, experiment_name, train_output_dir_name)
-    test_dir = os.path.join(output_dir, experiment_name, test_output_dir_name)
 
     net = autoencoder(dims)
     kurt_loss = KurtosisLoss()
     reconstruction_loss = torch.nn.MSELoss()
 
-    dataset = MNIST(data_dir, transform=img_transform, train=True)
-    testset = MNIST(data_dir, transform=img_transform, train=False)
-
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-    testloader = DataLoader(testset, batch_size=batch_size, shuffle=True)
-    loaders = {'train': dataloader, 'test': testloader}
+    loaders = get_loaders(batch_size, data_dir)
 
     writer = SummaryWriter(os.path.join(output_dir, experiment_name, 'tensorboard'))
 
     net.to(device)
     optimizer = optim.SGD(net.parameters(), lr=intial_lr, momentum=momentum)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=lr_decay_step_size, gamma=lr_decay)
-    # batch = next(iter(dataloader))
-    # for epoch in range(100):
-    #     for iteration in range(6000):
     for epoch in range(epochs):
         loss_dict = {}
         for phase, loader in loaders.items():
@@ -126,4 +95,24 @@ if __name__ == '__main__':
         writer.add_scalar('lr vs epoch', optimizer.param_groups[0]['lr'], epoch)
         scheduler.step()
 
-a = 3
+
+def get_img_trans():
+    img_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
+    return img_transform
+
+
+def get_loaders(batch_size, data_dir):
+    img_transform = get_img_trans()
+    dataset = MNIST(data_dir, transform=img_transform, train=True)
+    testset = MNIST(data_dir, transform=img_transform, train=False)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    testloader = DataLoader(testset, batch_size=batch_size, shuffle=True)
+    loaders = {'train': dataloader, 'test': testloader}
+    return loaders
+
+
+if __name__ == '__main__':
+    main()
