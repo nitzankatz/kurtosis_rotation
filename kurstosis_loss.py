@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+
 class KurtosisLoss(torch.nn.Module):
     def __init__(self):
         """
@@ -15,12 +16,12 @@ class KurtosisLoss(torch.nn.Module):
         a Tensor of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Tensors.
         """
-        x = torch.pow(x,4) - 3
+        x = torch.pow(x, 4) - 3
         x = torch.abs(x)
-        return torch.sum(x)
+        return -torch.sum(x)
 
 
 if __name__ == '__main__':
-    x = torch.Tensor(np.random.rand(5,10))
+    x = torch.Tensor(np.random.rand(5, 10))
     Criterion = KurtosisLoss()
     loss = Criterion(x)

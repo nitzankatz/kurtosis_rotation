@@ -14,24 +14,7 @@ from tensorboardX import SummaryWriter
 
 
 def main():
-    device = 'cpu'
-    im_dim = 28
-    dim = im_dim ** 2
-    dims = [dim] * 6
-    epochs = 100
-    lamda = 0
-    batch_size = 100
-    print_every_iteration = 100
-    write_output_every_epoch = 1
-    num_images_to_output = 10
-    intial_lr = 0.1
-    momentum = 0.9
-    lr_decay_step_size = 5
-    lr_decay = 0.5
-    output_dir = 'output'
-    data_dir = 'data'
-    experiment_name = 'no_kurt_deeper_higher_lr'
-    image_format_ext = '.png'
+    batch_size, data_dir, device, dims, epochs, experiment_name, im_dim, image_format_ext, intial_lr, lamda, lr_decay, lr_decay_step_size, momentum, num_images_to_output, output_dir, print_every_iteration, write_output_every_epoch = get_configuration()
 
     net = autoencoder(dims)
     kurt_loss = KurtosisLoss()
@@ -94,6 +77,28 @@ def main():
         writer.add_scalars("loss vs epoch", loss_dict, epoch)
         writer.add_scalar('lr vs epoch', optimizer.param_groups[0]['lr'], epoch)
         scheduler.step()
+
+
+def get_configuration():
+    device = 'cpu'
+    im_dim = 28
+    dim = im_dim ** 2
+    dims = [dim] * 6
+    epochs = 100
+    lamda = 1e-6
+    batch_size = 100
+    print_every_iteration = 100
+    write_output_every_epoch = 1
+    num_images_to_output = 10
+    intial_lr = 0.1
+    momentum = 0.9
+    lr_decay_step_size = 5
+    lr_decay = 0.5
+    output_dir = 'output'
+    data_dir = 'data'
+    experiment_name = 'with_kurt_deeper_higher_lr'
+    image_format_ext = '.png'
+    return batch_size, data_dir, device, dims, epochs, experiment_name, im_dim, image_format_ext, intial_lr, lamda, lr_decay, lr_decay_step_size, momentum, num_images_to_output, output_dir, print_every_iteration, write_output_every_epoch
 
 
 def get_img_trans():
