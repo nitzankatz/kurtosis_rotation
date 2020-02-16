@@ -44,19 +44,24 @@ def main():
                 batch_vectors = torch.flatten(batch_images, start_dim=1)
                 batch_vectors.to(device)
                 latent_dim_variables = net.encode(batch_vectors)
+                if phase =='train':
+                    writer.add_histogram('latent',latent_dim_variables,epoch * iter_in_epoch + iteration)
                 out = net.decode(latent_dim_variables)
-                loss = reconstruction_loss(out, batch_vectors) + lamda * kurt_loss(latent_dim_variables)
+                mse = reconstruction_loss(out, batch_vectors)
+                kurt = lamda * kurt_loss(latent_dim_variables)
+                loss = mse + kurt
                 num_samples += 1
                 loss_sum += loss.detach().cpu().numpy()
                 if iteration % print_every_iteration == 0:
                     print(
-                        'epoch {} ---- {} --- iteration {} out of {}. lr = {:.3f} loss = {}'.format(epoch, phase,
-                                                                                                    iteration,
-                                                                                                    iter_in_epoch,
-                                                                                                    optimizer.param_groups[
-                                                                                                        0][
-                                                                                                        'lr'],
-                                                                                                    loss.detach().numpy()))
+                        'epoch {} ---- {} --- iteration {} out of {}. lr = {:.3f} mse = {:.4f} loss_kurt = {:.5f}'.format(epoch, phase,
+                                                                                                       iteration,
+                                                                                                       iter_in_epoch,
+                                                                                                       optimizer.param_groups[
+                                                                                                           0][
+                                                                                                           'lr'],
+                                                                                                       mse.detach().numpy(),
+                                                                                                       kurt.detach().numpy()))
                 if phase == 'train':
                     loss.backward()
                     optimizer.step()
@@ -85,7 +90,7 @@ def get_configuration():
     dim = im_dim ** 2
     dims = [dim] * 6
     epochs = 100
-    lamda = 1e-6
+    lamda = 0
     batch_size = 100
     print_every_iteration = 100
     write_output_every_epoch = 1
@@ -96,7 +101,7 @@ def get_configuration():
     lr_decay = 0.5
     output_dir = 'output'
     data_dir = 'data'
-    experiment_name = 'with_kurt_deeper_higher_lr'
+    experiment_name = 'auto_encoder_new_torch'
     image_format_ext = '.png'
     return batch_size, data_dir, device, dims, epochs, experiment_name, im_dim, image_format_ext, intial_lr, lamda, lr_decay, lr_decay_step_size, momentum, num_images_to_output, output_dir, print_every_iteration, write_output_every_epoch
 
@@ -104,7 +109,8 @@ def get_configuration():
 def get_img_trans():
     img_transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        # transforms.Normalize((0.5), (0.5))
+        transforms.Normalize((0.1307,), (0.3081,))
     ])
     return img_transform
 
