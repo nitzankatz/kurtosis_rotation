@@ -25,7 +25,8 @@ def main():
     writer = SummaryWriter(os.path.join(output_dir, experiment_name, 'tensorboard'))
 
     net.to(device)
-    optimizer = optim.SGD(net.parameters(), lr=intial_lr, momentum=momentum)
+    # optimizer = optim.SGD(net.parameters(), lr=intial_lr, momentum=momentum)
+    optimizer = optim.Adam(net.parameters(), lr=intial_lr, betas=(0.0, 0.9), weight_decay=0)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=lr_decay_step_size, gamma=lr_decay)
     for epoch in range(epochs):
         loss_dict = {}
@@ -95,13 +96,13 @@ def get_configuration():
     print_every_iteration = 100
     write_output_every_epoch = 1
     num_images_to_output = 10
-    intial_lr = 0.1
+    intial_lr = 1e-3
     momentum = 0.9
-    lr_decay_step_size = 5
+    lr_decay_step_size = 10
     lr_decay = 0.5
     output_dir = 'output'
     data_dir = 'data'
-    experiment_name = 'auto_encoder_new_torch'
+    experiment_name = 'temp_adam_over_fit'
     image_format_ext = '.png'
     return batch_size, data_dir, device, dims, epochs, experiment_name, im_dim, image_format_ext, intial_lr, lamda, lr_decay, lr_decay_step_size, momentum, num_images_to_output, output_dir, print_every_iteration, write_output_every_epoch
 
