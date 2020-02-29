@@ -25,9 +25,10 @@ def main():
     writer = SummaryWriter(os.path.join(output_dir, experiment_name, 'tensorboard'))
 
     net.to(device)
-    # optimizer = optim.SGD(net.parameters(), lr=intial_lr, momentum=momentum)
-    optimizer = optim.Adam(net.parameters(), lr=intial_lr, betas=(0.0, 0.9), weight_decay=0)
+    optimizer = optim.SGD(net.parameters(), lr=intial_lr, momentum=momentum)
+    # optimizer = optim.Adam(net.parameters(), lr=intial_lr, betas=(0.0, 0.9), weight_decay=0)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=lr_decay_step_size, gamma=lr_decay)
+    # batch = next(iter(loaders['train']))
     for epoch in range(epochs):
         loss_dict = {}
         for phase, loader in loaders.items():
@@ -38,15 +39,18 @@ def main():
                 net.eval()
             num_samples = 0
             loss_sum = 0
+            # for iteration in range(iter_in_epoch):
             for iteration, batch in enumerate(loader):
                 if phase == 'train':
                     net.zero_grad()
                 batch_images, _ = batch
+                if iteration == 0 and phase == 'train':
+                    print(batch[1])
                 batch_vectors = torch.flatten(batch_images, start_dim=1)
                 batch_vectors.to(device)
                 latent_dim_variables = net.encode(batch_vectors)
-                if phase =='train':
-                    writer.add_histogram('latent',latent_dim_variables,epoch * iter_in_epoch + iteration)
+                # if phase =='train':
+                #     writer.add_histogram('latent',latent_dim_variables,epoch * iter_in_epoch + iteration)
                 out = net.decode(latent_dim_variables)
                 mse = reconstruction_loss(out, batch_vectors)
                 kurt = lamda * kurt_loss(latent_dim_variables)
@@ -56,13 +60,13 @@ def main():
                 if iteration % print_every_iteration == 0:
                     print(
                         'epoch {} ---- {} --- iteration {} out of {}. lr = {:.3f} mse = {:.4f} loss_kurt = {:.5f}'.format(epoch, phase,
-                                                                                                       iteration,
-                                                                                                       iter_in_epoch,
-                                                                                                       optimizer.param_groups[
-                                                                                                           0][
-                                                                                                           'lr'],
-                                                                                                       mse.detach().numpy(),
-                                                                                                       kurt.detach().numpy()))
+                                                                                                                          iteration,
+                                                                                                                          iter_in_epoch,
+                                                                                                                          optimizer.param_groups[
+                                                                                                                              0][
+                                                                                                                              'lr'],
+                                                                                                                          mse.detach().numpy(),
+                                                                                                                          kurt.detach().numpy()))
                 if phase == 'train':
                     loss.backward()
                     optimizer.step()
@@ -96,13 +100,13 @@ def get_configuration():
     print_every_iteration = 100
     write_output_every_epoch = 1
     num_images_to_output = 10
-    intial_lr = 1e-3
+    intial_lr = 1
     momentum = 0.9
-    lr_decay_step_size = 10
-    lr_decay = 0.5
+    lr_decay_step_size = 1
+    lr_decay = 0.9
     output_dir = 'output'
     data_dir = 'data'
-    experiment_name = 'temp_adam_over_fit'
+    experiment_name = 'mse_to_zero'
     image_format_ext = '.png'
     return batch_size, data_dir, device, dims, epochs, experiment_name, im_dim, image_format_ext, intial_lr, lamda, lr_decay, lr_decay_step_size, momentum, num_images_to_output, output_dir, print_every_iteration, write_output_every_epoch
 

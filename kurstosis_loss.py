@@ -44,7 +44,6 @@ class KurtosisLoss(torch.nn.Module):
         # x = cov_at_minus_half @ x
         x = torch.pow(x, 4) -3
         x = torch.abs(x)
-        x = torch.sum(x,dim=1)
         return -x.mean()
 
 
